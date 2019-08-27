@@ -15,7 +15,9 @@ class Process
     protected $runable;
     protected $queue;
     protected $listener;
-    const MessageFlag = 'breeze\process_control';
+
+    // 定义消息发送收受长度
+    const MessageLength = 2048;
 
     public function __construct(Runable $runable)
     {
@@ -47,14 +49,18 @@ class Process
             try{
 
                 $message = $this->runable->run();
+                $msgLen = strlen(serialize($message));
+                if($msgLen > self::MessageLength){
+                    throw new \Exception('消息长度不能超过: ' . self::MessageLength);
+                }
+
                 if($message !== null){
                     $this->sendMessage($message);
-                }else{
-                    $this->sendMessage(self::MessageFlag);
                 }
 
             }catch (\Exception $exception){
-                //自杀自己的进程
+
+                
 
             } finally{
 
@@ -84,11 +90,8 @@ class Process
 
     protected function handleMessage(MessageListener $listener)
     {
-        msg_receive($this->queue, 0, $type, 1024, $s);
-        if($s !== self::MessageFlag){
-            $listener->onReceived($s);
-        }
-
+        msg_receive($this->queue, 0, $type, self::MessageLength, $s, true, MSG_IPC_NOWAIT, $error);
+        $listener->onReceived($s, $type, $error);
         msg_remove_queue($this->queue);
     }
 

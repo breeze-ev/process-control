@@ -58,7 +58,10 @@ class ProcessTest extends TestCase implements MessageListener
 
                 public function run()
                 {
-                    return $this->i;
+                    return [
+                        '1' => 1,
+                        '2' => 2
+                    ];
                 }
 
             }))->listener($this)->start();
@@ -70,7 +73,7 @@ class ProcessTest extends TestCase implements MessageListener
 
     }
 
-    public function onReceived($message)
+    public function onReceived($message, $type, $error)
     {
         $this->array[] = $message;
     }
