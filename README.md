@@ -1,11 +1,11 @@
 # ProcessControl
 
+
+此包为PHP多进程编程包，风格类似Java多线程，主进程开启子进程，子进程可向主进程通信(基于msg_queue)
+
 ## 安装方法
 
 
-
-
-此包为PHP多进程编程包，风格类似Java多线程，主进程开启子进程，子进程可向主进程通信(基于msg_queue)
 
 **需要 posix 和 pcntl扩展**
 
