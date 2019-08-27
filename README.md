@@ -74,7 +74,7 @@ for($i = 0; $i < 8; $i++)
         return 'hello world';
     }
 
-}))->listener(new class implements MessageListener{
+}))->listener(new class implements MessageListener {
 
     public function onReceived($message)
     {
