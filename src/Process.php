@@ -60,7 +60,7 @@ class Process
 
             }catch (\Exception $exception){
 
-                
+
 
             } finally{
 
@@ -91,7 +91,7 @@ class Process
     protected function handleMessage(MessageListener $listener)
     {
         msg_receive($this->queue, 0, $type, self::MessageLength, $s, true, MSG_IPC_NOWAIT, $error);
-        $listener->onReceived($s, $type, $error);
+        $listener->onReceived($s);
         msg_remove_queue($this->queue);
     }
 

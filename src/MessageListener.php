@@ -12,6 +12,6 @@ namespace Breeze\ProcessControl;
 interface MessageListener
 {
 
-    public function onReceived($message, $type, $error);
+    public function onReceived($message);
 
 }

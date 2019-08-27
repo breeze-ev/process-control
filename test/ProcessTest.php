@@ -73,7 +73,7 @@ class ProcessTest extends TestCase implements MessageListener
 
     }
 
-    public function onReceived($message, $type, $error)
+    public function onReceived($message)
     {
         $this->array[] = $message;
     }
