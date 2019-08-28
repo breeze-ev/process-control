@@ -7,7 +7,7 @@
 
 
 
-**需要 posix 和 pcntl扩展**
+**需要 pcntl 和 posix 扩展**
 
 
 ```
@@ -17,7 +17,7 @@ composer require breeze-ev/process-control
 
 ## 实例
 
-* 单开子线程
+* 单开子进程
 
 ```PHP
 (new Process(new class implements Runable {
@@ -25,7 +25,7 @@ composer require breeze-ev/process-control
     public function run()
     {
     
-       // 子线程中运行
+       // 子进程中运行
        echo  'hello world';
     }
 
@@ -34,13 +34,13 @@ composer require breeze-ev/process-control
 ```
 
 
-* 多开子线程
+* 多开子进程
 
 ```PHP
 for($i = 0; $i < 8; $i++)
 {
 
-    // 主线程向子线程传递数据
+    // 主进程向子进程传递数据
 
     (new Process(new class($i) implements Runable {
 
@@ -53,7 +53,7 @@ for($i = 0; $i < 8; $i++)
 
         public function run()
         {
-            // 子线程中运行
+            // 子进程中运行
             echo $this->i;
         }
 
@@ -62,7 +62,7 @@ for($i = 0; $i < 8; $i++)
 }
 ```
 
-* 子线程向主线程发送数据
+* 子进程向主进程发送数据
 
 
 ```PHP
@@ -70,7 +70,7 @@ for($i = 0; $i < 8; $i++)
 
     public function run()
     {
-        // 子线程中运行
+        // 子进程中运行
         return 'hello world';
     }
 
@@ -78,7 +78,7 @@ for($i = 0; $i < 8; $i++)
 
     public function onReceived($message)
     {
-        // 主线程中运行
+        // 主进程中运行
         echo $message;
     }
 
