@@ -22,7 +22,7 @@ class Process
     public function __construct(Runable $runable)
     {
         $key = ftok( __FILE__, 'a');
-        // 然后使用msg_get_queue创建一个消息队列
+        // 使用 msg_get_queue 创建一个消息队列
         $queue = msg_get_queue($key);
         $this->queue = $queue;
 
@@ -38,12 +38,14 @@ class Process
     public function start()
     {
 
-        $pid = pcntl_fork(); // 创建子进程
+        // 创建进程
+        $pid = pcntl_fork();
 
         if($pid == -1) {
+
             die('fork error');
-        }
-        elseif ($pid === 0) {
+
+        } elseif ($pid === 0) {
 
             // 子进程处理逻辑
             try{
@@ -58,11 +60,11 @@ class Process
                     $this->sendMessage($message);
                 }
 
-            }catch (\Exception $exception){
+            }catch(\Exception $exception){
 
+                // todo
 
-
-            } finally{
+            }finally{
 
                 exit;
             }
@@ -90,9 +92,20 @@ class Process
 
     protected function handleMessage(MessageListener $listener)
     {
-        msg_receive($this->queue, 0, $type, self::MessageLength, $s, true, MSG_IPC_NOWAIT, $error);
-        $listener->onReceived($s);
-        msg_remove_queue($this->queue);
+
+        try{
+
+            msg_receive($this->queue, 0, $type, self::MessageLength, $s, true, MSG_IPC_NOWAIT, $error);
+            $listener->onReceived($s);
+            msg_remove_queue($this->queue);
+
+        }catch(\Exception $exception){
+
+            // todo
+
+        }
+
+
     }
 
 }
