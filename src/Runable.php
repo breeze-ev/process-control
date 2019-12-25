@@ -11,6 +11,6 @@ interface Runable
 {
 
 
-    public function run();
+    public function run($max, $current);
 
 }

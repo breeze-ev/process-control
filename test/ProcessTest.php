@@ -21,7 +21,7 @@ class ProcessTest extends TestCase implements MessageListener
 
         (new Process(new class implements Runable {
 
-            public function run()
+            public function run($max, $current)
             {
                 return 1;
             }
@@ -31,42 +31,27 @@ class ProcessTest extends TestCase implements MessageListener
 
         (new Process(new class implements Runable {
 
-            public function run()
+            public function run($max, $current)
             {
                 return 2;
             }
 
         }))->listener($this)->start();
 
-        print_r($this->array);
 
     }
 
     public function testMulti(){
 
 
-        for($i = 0; $i < 8; $i++)
-        {
-            (new Process(new class($i) implements Runable {
+        (new Process(new class implements Runable {
 
-                protected $i;
+            public function run($max, $i)
+            {
+                return $i;
+            }
 
-                public function __construct($i)
-                {
-                    $this->i = $i;
-                }
-
-                public function run()
-                {
-                    return [
-                        '1' => 1,
-                        '2' => 2
-                    ];
-                }
-
-            }))->listener($this)->start();
-
-        }
+        }))->listener($this)->start(3);
 
 
         print_r($this->array);

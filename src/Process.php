@@ -35,52 +35,63 @@ class Process
         return $this;
     }
 
-    public function start()
+    public function start(int $num = 1)
     {
 
-        // 创建进程
-        $pid = pcntl_fork();
+        if($num < 1)
+        {
+            throw new \Error('num must >= 1');
+        }
 
-        if($pid == -1) {
+        for($i = 1; $i <= $num; $i++)
+        {
+            // 创建进程
+            $pid = pcntl_fork();
 
-            die('fork error');
+            if($pid == -1) {
 
-        } elseif ($pid === 0) {
+                die('fork error');
 
-            // 子进程处理逻辑
-            try{
+            } elseif ($pid === 0) {
 
-                $message = $this->runable->run();
-                $msgLen = strlen(serialize($message));
-                if($msgLen > self::MessageLength){
-                    throw new \Exception('消息长度不能超过: ' . self::MessageLength);
+                // 子进程处理逻辑
+                try{
+
+                    $message = $this->runable->run($num, $i);
+                    $msgLen = strlen(serialize($message));
+                    if($msgLen > self::MessageLength){
+                        throw new \Exception('消息长度不能超过: ' . self::MessageLength);
+                    }
+
+                    if($message !== null){
+                        $this->sendMessage($message);
+                    }
+
+                }catch(\Exception $exception){
+
+                    // todo
+
+                }finally{
+
+                    exit;
                 }
-
-                if($message !== null){
-                    $this->sendMessage($message);
-                }
-
-            }catch(\Exception $exception){
-
-                // todo
-
-            }finally{
-
-                exit;
             }
 
         }
+
+
 
         // 父进程处理逻辑
 
         // 父进程
         while (pcntl_waitpid(0, $status) != -1) {
             $status = pcntl_wexitstatus($status);
+            if($this->listener instanceof MessageListener){
+                $this->handleMessage($this->listener);
+            }
         }
 
-        if($this->listener instanceof MessageListener){
-            $this->handleMessage($this->listener);
-        }
+
     }
 
 
@@ -95,7 +106,7 @@ class Process
 
         try{
 
-            msg_receive($this->queue, 0, $type, self::MessageLength, $s, true, MSG_IPC_NOWAIT, $error);
+            msg_receive($this->queue, 0, $type, self::MessageLength, $s, true);
             $listener->onReceived($s);
             msg_remove_queue($this->queue);
 
