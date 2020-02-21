@@ -6,12 +6,10 @@
  * Time: 13:53
  */
 
-use Breeze\ProcessControl\MessageListener;
-use Breeze\ProcessControl\Process;
-use Breeze\ProcessControl\Runable;
+use Breeze\ProcessControl\Master;
 use PHPUnit\Framework\TestCase;
 
-class ProcessTest extends TestCase implements MessageListener
+class ProcessTest extends TestCase
 {
 
     protected $array;
@@ -19,47 +17,59 @@ class ProcessTest extends TestCase implements MessageListener
     public function testProcess()
     {
 
-        (new Process(new class implements Runable {
-
-            public function run($max, $current)
-            {
-                return 1;
-            }
-
-        }))->listener($this)->start();
+        $master = new Master(5);
+        $master->worker(10, function($num, $pid, $ppid){
 
 
-        (new Process(new class implements Runable {
+            echo '第' . $num . '个子进程开启 pid:' . $pid . ' 父进程id:' . $ppid . PHP_EOL;
 
-            public function run($max, $current)
-            {
-                return 2;
-            }
+            sleep(rand(1,3));
 
-        }))->listener($this)->start();
+
+            echo '第' . $num . '个子进程退出' . PHP_EOL;
+
+
+            return $num;
+
+        })->start();
+
+
+        print_r($master->result());
+
+
+        $this->assertIsArray($master->result());
 
 
     }
 
-    public function testMulti(){
-
-
-        (new Process(new class implements Runable {
-
-            public function run($max, $i)
-            {
-                return $i;
-            }
-
-        }))->listener($this)->start(3);
-
-
-        print_r($this->array);
-
-    }
-
-    public function onReceived($message)
+    public function testAdd()
     {
-        $this->array[] = $message;
+        $master = new Master(5);
+
+        for ($i = 0; $i <= 10; $i++)
+        {
+            $master->addWorker(function($num, $pid, $ppid) use ($i){
+
+                echo '第' . $num . '个子进程开启 pid:' . $pid . ' 父进程id:' . $ppid . PHP_EOL;
+
+                sleep(rand(1,3));
+
+
+                echo '第' . $num . '个子进程退出' . PHP_EOL;
+
+                return $i;
+            });
+        }
+
+        $master->start();
+
+        $result = $master->result();
+
+        print_r($result);
+
+        $this->assertIsArray($result);
+
+
     }
+
 }

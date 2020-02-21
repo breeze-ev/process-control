@@ -1,7 +1,7 @@
 # ProcessControl
 
 
-此包为PHP多进程编程包，风格类似Java多线程，主进程开启子进程，子进程可向主进程通信(基于msg_queue)
+此包为PHP多进程编程包，主进程开启多子进程，子进程可向主进程通信(基于msg_queue)
 
 ## 安装方法
 
@@ -17,71 +17,80 @@ composer require breeze-ev/process-control
 
 ## 实例
 
-* 单开子进程
+* 多开子进程 1
+
+并发进程控制数为5， 共开10个进程处理业务
 
 ```PHP
-(new Process(new class implements Runable {
+$master = new Master(5);
+$master->worker(10, function($num, $pid, $ppid){
 
-    public function run()
-    {
-    
-       // 子进程中运行
-       echo  'hello world';
-    }
 
-}))->start();
+    echo '第' . $num . '个子进程开启 pid:' . $pid . ' 父进程id:' . $ppid . PHP_EOL;
+
+    sleep(rand(1,3));
+
+
+    echo '第' . $num . '个子进程退出' . PHP_EOL;
+
+})->start();
+
+print_r($master->result());
 
 ```
 
 
-* 多开子进程
+* 多开子进程 2
 
 ```PHP
-for($i = 0; $i < 8; $i++)
+$master = new Master(5);
+
+for ($i = 0; $i <= 10; $i++)
 {
+    $master->addWorker(function($num, $pid, $ppid) use ($i){
 
-    // 主进程向子进程传递数据
+        echo '第' . $num . '个子进程开启 pid:' . $pid . ' 父进程id:' . $ppid . PHP_EOL;
 
-    (new Process(new class($i) implements Runable {
+        sleep(rand(1,3));
 
-        protected $i;
 
-        public function __construct($i)
-        {
-            $this->i = $i;
-        }
+        echo '第' . $num . '个子进程退出' . PHP_EOL;
 
-        public function run()
-        {
-            // 子进程中运行
-            echo $this->i;
-        }
-
-    }))->start();
-
+    });
 }
+
+$master->start();
+
+$result = $master->result();
+
+print_r($result);
 ```
 
 * 子进程向主进程发送数据
 
 
 ```PHP
-(new Process(new class implements Runable {
+$master = new Master(5);
 
-    public function run()
-    {
-        // 子进程中运行
-        return 'hello world';
-    }
+for ($i = 0; $i <= 10; $i++)
+{
+    $master->addWorker(function($num, $pid, $ppid) use ($i){
 
-}))->listener(new class implements MessageListener {
+        echo '第' . $num . '个子进程开启 pid:' . $pid . ' 父进程id:' . $ppid . PHP_EOL;
 
-    public function onReceived($message)
-    {
-        // 主进程中运行
-        echo $message;
-    }
+        sleep(rand(1,3));
 
-})->start();
+
+        echo '第' . $num . '个子进程退出' . PHP_EOL;
+
+        return $i; // 数据返回给主进程
+    });
+}
+
+$master->start();
+
+$result = $master->result(); // 主进程数据可查看所有子进程返回的 message
+
+print_r($result);
 ```
 
