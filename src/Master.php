@@ -8,7 +8,6 @@
 
 namespace Breeze\ProcessControl;
 
-
 use Closure;
 
 class Master
@@ -30,7 +29,7 @@ class Master
     public function __construct($maxWorkers = 5)
     {
         set_time_limit(0);
-        $this->$maxWorkers = $maxWorkers;
+        $this->maxWorkers = $maxWorkers;
         $this->pid = posix_getpid();
         $this->pgid = posix_getpgid($this->pid);
         $this->ppid = posix_getppid();
@@ -68,39 +67,48 @@ class Master
         $workers = $this->workers;
         $execute = 1;
 
-        foreach ($workers as $key => $worker) {
 
-            $this->fork(function($pid, $cpid) use ($key, &$execute, $max){
-
-                $this->workers[$key]['status'] = 0;
-
-                $execute++;
-                if ($execute > $max){
-
-                    $pid = pcntl_waitpid(0, $status);
-                    if($pid != -1) {
-                        $code = pcntl_wexitstatus($status);
-                        $this->workers[$code]['status'] = 1;
-                    }
-
-                    $execute--;
-                }
-
-
-            }, function($pid, $ppid) use ($key, $worker){
-
-
+        // 最大为1时，或系统不支持扩展时采用主进程阻塞运行，提高兼容性
+        if($max == 1 || $this->isNotSupportMulti())
+        {
+            foreach ($workers as $key => $worker)
+            {
                 $worker = $worker['closure'];
-                $message = $worker($key, $pid, $ppid);
+                $message = $worker($key, $this->pid, $this->ppid);
                 $data = json_encode(['key' => $key, 'message' => $message]);
-
                 //将一条消息加入消息队列
                 msg_send($this->queue, 1, $data);
+            }
 
-                exit($key);
+        }else{
 
-            });
+            foreach ($workers as $key => $worker) {
+
+                $this->fork(function($pid, $cpid) use ($key, &$execute, $max){
+                    $this->workers[$key]['status'] = 0;
+                    $execute++;
+                    if ($execute > $max){
+                        $pid = pcntl_waitpid(0, $status);
+                        if($pid != -1) {
+                            $code = pcntl_wexitstatus($status);
+                            $this->workers[$code]['status'] = 1;
+                        }
+                        $execute--;
+                    }
+                }, function($pid, $ppid) use ($key, $worker){
+                    $worker = $worker['closure'];
+                    $message = $worker($key, $pid, $ppid);
+                    $data = json_encode(['key' => $key, 'message' => $message]);
+                    //将一条消息加入消息队列
+                    msg_send($this->queue, 1, $data);
+                    exit($key);
+
+                });
+            }
+
         }
+
+
 
         do {
 
@@ -182,6 +190,22 @@ class Master
     protected function deleteQueue()
     {
         msg_remove_queue($this->queue);
+    }
+
+    public function isNotSupportMulti()
+    {
+        return !$this->isSupportMulti();
+    }
+
+    public function isSupportMulti()
+    {
+        $pcntlStatus = in_array('pcntl', get_loaded_extensions());
+        $posixStatus = in_array('posix', get_loaded_extensions());
+        if($pcntlStatus && $posixStatus)
+        {
+            return true;
+        }
+        return false;
     }
 
 }
