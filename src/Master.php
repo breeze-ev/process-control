@@ -71,13 +71,12 @@ class Master
         // 最大为1时，或系统不支持扩展时采用主进程阻塞运行，提高兼容性
         if($max == 1 || $this->isNotSupportMulti())
         {
+            $this->deleteQueue();
             foreach ($workers as $key => $worker)
             {
                 $worker = $worker['closure'];
                 $message = $worker($key, $this->pid, $this->ppid);
-                $data = json_encode(['key' => $key, 'message' => $message]);
-                //将一条消息加入消息队列
-                msg_send($this->queue, 1, $data);
+                $this->workers[$key]['message'] = $message;
             }
 
         }else{
@@ -122,8 +121,10 @@ class Master
         } while ($pid != -1);
 
 
-        $this->massage();
-
+        if($max >= 2 && $this->isSupportMulti())
+        {
+            $this->massage();
+        }
     }
 
 
