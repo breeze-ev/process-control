@@ -82,7 +82,6 @@ class ProcessTest extends TestCase
             $master->addWorker(function($num, $pid, $ppid) use ($i){
 
                 echo '第' . $num . '个子进程开启 pid:' . $pid . ' 父进程id:' . $ppid . PHP_EOL;
-                sleep(10);
                 echo '第' . $num . '个子进程退出' . PHP_EOL;
                 return $i;
             });
