@@ -46,6 +46,8 @@ class Master
         for($i = 0; $i < $numWorkers; $i++)
         {
             $workers[$i]['closure'] = $closure;
+            $workers[$i]['status'] = 0;
+            $workers[$i]['message'] = null;
         }
 
         $this->workers = array_merge($this->workers, $workers);
@@ -56,7 +58,11 @@ class Master
     public function addWorker(Closure $closure)
     {
 
-        $this->workers[] = ['closure' => $closure];
+        $this->workers[] = [
+            'closure' => $closure,
+            'status' => 0,
+            'message' => null
+        ];
         return $this;
     }
 
@@ -77,6 +83,7 @@ class Master
                 $worker = $worker['closure'];
                 $message = $worker($key, $this->pid, $this->ppid);
                 $this->workers[$key]['message'] = $message;
+                $this->workers[$key]['status'] = 1;
             }
 
         }else{
@@ -108,21 +115,22 @@ class Master
         }
 
 
-
-        do {
-
-            $pid = pcntl_waitpid(0, $status);
-            if(pcntl_wifexited($status))
-            {
-                $code = pcntl_wexitstatus($status);
-                $this->workers[$code]['status'] = 1;
-            }
-
-        } while ($pid != -1);
-
-
         if($max >= 2 && $this->isSupportMulti())
         {
+
+            do {
+
+                $pid = pcntl_waitpid(0, $status);
+                if(pcntl_wifexited($status))
+                {
+                    $code = pcntl_wexitstatus($status);
+                    $this->workers[$code]['status'] = 1;
+                }
+
+            } while ($pid != -1);
+
+
+
             $this->massage();
         }
     }
