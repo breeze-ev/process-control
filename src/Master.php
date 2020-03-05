@@ -25,17 +25,31 @@ class Master
 
     protected $queue;
 
+    protected $isSupportMulti;
+
 
     public function __construct($maxWorkers = 5)
     {
         set_time_limit(0);
         $this->maxWorkers = $maxWorkers;
-        $this->pid = posix_getpid();
-        $this->pgid = posix_getpgid($this->pid);
-        $this->ppid = posix_getppid();
 
-        $this->makeQueue($this->pgid);
+        if($this->isSupportMulti())
+        {
+            $this->pid = posix_getpid(); // 多进程时使用posix增加子进程获取的准确性
+            $this->pgid = posix_getpgid($this->pid);
+            $this->ppid = posix_getppid();
 
+            // 多进程时才开启消息队列
+            if($maxWorkers >= 2)
+            {
+                $this->makeQueue($this->pgid);
+            }
+
+        }else{
+            $this->ppid = 0; // 无
+            $this->pid = getmypid(); // 单进程时使用默认的方法
+            $this->pgid = 0; // 无
+        }
     }
 
 
@@ -77,7 +91,6 @@ class Master
         // 最大为1时，或系统不支持扩展时采用主进程阻塞运行，提高兼容性
         if($max == 1 || $this->isNotSupportMulti())
         {
-            $this->deleteQueue();
             foreach ($workers as $key => $worker)
             {
                 $worker = $worker['closure'];
@@ -91,7 +104,6 @@ class Master
             foreach ($workers as $key => $worker) {
 
                 $this->fork(function($pid, $cpid) use ($key, &$execute, $max){
-                    $this->workers[$key]['status'] = 0;
                     $execute++;
                     if ($execute > $max){
                         $pid = pcntl_waitpid(0, $status);
@@ -119,7 +131,6 @@ class Master
         {
 
             do {
-
                 $pid = pcntl_waitpid(0, $status);
                 if(pcntl_wifexited($status))
                 {
@@ -128,8 +139,6 @@ class Master
                 }
 
             } while ($pid != -1);
-
-
 
             $this->massage();
         }
@@ -208,13 +217,18 @@ class Master
 
     public function isSupportMulti()
     {
-        $pcntlStatus = in_array('pcntl', get_loaded_extensions());
-        $posixStatus = in_array('posix', get_loaded_extensions());
-        if($pcntlStatus && $posixStatus)
+        if($this->isSupportMulti === null)
         {
-            return true;
+            $pcntlStatus = in_array('pcntl', get_loaded_extensions());
+            $posixStatus = in_array('posix', get_loaded_extensions());
+
+            if($pcntlStatus && $posixStatus)
+            {
+                $this->isSupportMulti = true;
+            }
+            $this->isSupportMulti = false;
         }
-        return false;
+        return $this->isSupportMulti;
     }
 
 }
