@@ -225,8 +225,9 @@ class Master
             if($pcntlStatus && $posixStatus)
             {
                 $this->isSupportMulti = true;
+            }else{
+                $this->isSupportMulti = false;
             }
-            $this->isSupportMulti = false;
         }
         return $this->isSupportMulti;
     }
