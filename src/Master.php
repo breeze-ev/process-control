@@ -81,6 +81,19 @@ class Master
     }
 
 
+    public function sync()
+    {
+        $this->maxWorkers = 1;
+        $this->start();;
+    }
+
+    public function async($maxWorks = 5)
+    {
+        $this->maxWorkers = $maxWorks;
+        $this->start();
+    }
+
+
     public function start()
     {
         $max = $this->maxWorkers;
