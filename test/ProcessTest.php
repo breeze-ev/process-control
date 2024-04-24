@@ -5,6 +5,7 @@
  * Date: 2019-08-26
  * Time: 13:53
  */
+namespace Test;
 
 use Breeze\ProcessControl\Master;
 use PHPUnit\Framework\TestCase;
