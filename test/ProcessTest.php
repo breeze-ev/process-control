@@ -75,7 +75,7 @@ class ProcessTest extends TestCase
     public function testSingleProcess()
     {
 
-        $master = new Master(1);
+        $master = new Master();
 
         for ($i = 0; $i <= 10; $i++)
         {
@@ -92,7 +92,9 @@ class ProcessTest extends TestCase
 
         $result = $master->result();
 
-        print_r($result);
+        $rs = array_column($result, 'message');
+
+        print_r($rs);
 
         $this->assertIsArray($result);
 

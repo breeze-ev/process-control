@@ -40,10 +40,10 @@ class Master
             $this->ppid = posix_getppid();
 
             // 多进程时才开启消息队列
-//            if($maxWorkers >= 2)
-//            {
-//                $this->makeQueue($this->pgid);
-//            }
+            if($maxWorkers >= 2)
+            {
+                $this->makeQueue($this->pgid);
+            }
 
         }else{
             $this->ppid = 0; // 无
@@ -131,7 +131,7 @@ class Master
                     $message = $worker($key, $pid, $ppid);
                     $data = json_encode(['key' => $key, 'message' => $message]);
                     //将一条消息加入消息队列
-//                    msg_send($this->queue, 1, $data);
+                    msg_send($this->queue, 1, $data);
                     exit($key);
 
                 });
@@ -153,7 +153,7 @@ class Master
 
             } while ($pid != -1);
 
-//            $this->massage();
+            $this->massage();
         }
     }
 
@@ -172,7 +172,7 @@ class Master
             unset($data);
         }
 
-//        $this->deleteQueue();
+        $this->deleteQueue();
     }
 
 
